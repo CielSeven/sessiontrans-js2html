@@ -1,0 +1,19 @@
+[project]
+name = "session-trans"
+version = "0.1.0"
+description = "Convert LLM session JSONL files into readable HTML transcripts"
+requires-python = ">=3.12"
+dependencies = [
+    "jinja2>=3.1",
+    "click>=8.0",
+]
+
+[project.scripts]
+session-trans = "session_trans.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/session_trans"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

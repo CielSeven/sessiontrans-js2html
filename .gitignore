@@ -1,0 +1,21 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# IDE
+.vscode/
+
+# Virtual environments
+.venv
+
+# uv
+uv.lock
+
+# Project data
+sessions-jsonl/
+output/
+masks.txt

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Transcript — {{ session_date }}</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card-bg: #fff;
+    --user-bg: #e3f2fd;    --user-border: #1976d2;
+    --asst-bg: #f3e5f5;    --asst-border: #7b1fa2;
+    --think-bg: #fff8e1;   --think-border: #f9a825;
+    --tool-bg: #e8f5e9;    --tool-border: #388e3c;
+    --result-bg: #fafafa;  --result-border: #bdbdbd;
+    --text: #212121;
+    --muted: #757575;
+    --mono: 'SF Mono','Fira Code','Cascadia Code',Consolas,monospace;
+    --sans: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.6;padding:20px;max-width:900px;margin:0 auto}
+  header{text-align:center;padding:30px 20px;margin-bottom:30px;background:var(--card-bg);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+  header h1{font-size:1.4em;margin-bottom:8px}
+  header .meta{color:var(--muted);font-size:.9em}
+  .msg{margin-bottom:16px;border-radius:10px;padding:14px 18px;position:relative;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .msg .label{font-weight:600;font-size:.8em;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  .msg .ts{position:absolute;top:14px;right:18px;font-size:.75em;color:var(--muted)}
+  .msg .body{font-size:.95em;white-space:pre-wrap;word-break:break-word}
+  .msg-user{background:var(--user-bg);border-left:4px solid var(--user-border)}
+  .msg-user .label{color:var(--user-border)}
+  .msg-asst{background:var(--asst-bg);border-left:4px solid var(--asst-border)}
+  .msg-asst .label{color:var(--asst-border)}
+  .msg-think{background:var(--think-bg);border-left:4px solid var(--think-border);font-style:italic}
+  .msg-think .label{color:var(--think-border)}
+  .msg-tool{background:var(--tool-bg);border-left:4px solid var(--tool-border)}
+  .msg-tool .label{color:var(--tool-border)}
+  .msg-result{background:var(--result-bg);border-left:4px solid var(--result-border)}
+  .msg-result .label{color:var(--muted)}
+  pre{background:#263238;color:#eeffff;padding:12px;border-radius:6px;overflow-x:auto;font-size:.85em;margin:8px 0;white-space:pre-wrap;word-break:break-word}
+  code{font-family:var(--mono);font-size:.9em;background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px}
+  pre code{background:none;padding:0}
+  details{margin-top:4px}
+  summary{cursor:pointer;color:var(--muted);font-size:.85em;user-select:none}
+  summary:hover{color:var(--text)}
+  .trunc{color:var(--muted);font-style:italic;font-size:.85em}
+  a{color:var(--user-border)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Session Transcript</h1>
+  <div class="meta">
+    {{ assistant_label }} &middot; {{ session_date }}<br>
+    <small>Source: {{ source_file }}</small>
+  </div>
+</header>
+
+{% for msg in messages %}
+{% if msg.role == "user" %}
+<div class="msg msg-user">
+  <div class="label">User {% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
+  <div class="body">{{ msg.content }}</div>
+</div>
+
+{% elif msg.role == "assistant" %}
+<div class="msg msg-asst">
+  <div class="label">{{ originator }} {% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
+  <div class="body">{{ msg.content }}</div>
+</div>
+
+{% elif msg.role == "thinking" %}
+{% set text, was_trunc = truncate(msg.content, 1500) %}
+<div class="msg msg-think">
+  <div class="label">Thinking {% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
+  <details><summary>Show reasoning</summary>
+    <div class="body">{{ text }}{% if was_trunc %} <span class="trunc">[truncated]</span>{% endif %}</div>
+  </details>
+</div>
+
+{% elif msg.role == "tool_call" %}
+{% set args_text = msg | format_tool_args %}
+{% set display, was_trunc = truncate(args_text, 3000) %}
+<div class="msg msg-tool">
+  <div class="label">Tool: {{ msg.tool_name }} {% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
+  <details><summary>Show call details</summary>
+    <pre><code>{{ display }}{% if was_trunc %} [truncated]{% endif %}</code></pre>
+  </details>
+</div>
+
+{% elif msg.role == "tool_result" %}
+{% set display, was_trunc = truncate(msg.content, 3000) %}
+<div class="msg msg-result">
+  <div class="label">Tool Result {% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
+  <details><summary>Show output</summary>
+    <pre><code>{{ display }}{% if was_trunc %} [truncated]{% endif %}</code></pre>
+  </details>
+</div>
+{% endif %}
+{% endfor %}
+
+</body>
+</html>
