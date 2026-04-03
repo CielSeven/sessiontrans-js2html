@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "jinja2>=3.1",
     "click>=8.0",
+    "markdown>=3.5",
 ]
 
 [project.scripts]

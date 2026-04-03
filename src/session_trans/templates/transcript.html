@@ -3,102 +3,264 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Session Transcript — {{ session_date }}</title>
+<title>{{ session_date }} — Transcript</title>
 <style>
   :root {
-    --bg: #f8f9fa;
-    --card-bg: #fff;
-    --user-bg: #e3f2fd;    --user-border: #1976d2;
-    --asst-bg: #f3e5f5;    --asst-border: #7b1fa2;
-    --think-bg: #fff8e1;   --think-border: #f9a825;
-    --tool-bg: #e8f5e9;    --tool-border: #388e3c;
-    --result-bg: #fafafa;  --result-border: #bdbdbd;
-    --text: #212121;
-    --muted: #757575;
-    --mono: 'SF Mono','Fira Code','Cascadia Code',Consolas,monospace;
-    --sans: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --bg: #f0f0f0;
+    --user-bg: #e3f2fd;
+    --asst-bg: #f3e5f5;
+    --think-bg: #fdf6e3;
+    --tool-bg: #f0faf0;
+    --result-bg: #f7f7f7;
+    --text: #2c2c2c;
+    --muted: #a0a0a0;
+    --accent: #6c5ce7;
+    --user-accent: #0984e3;
+    --mono: 'SF Mono','Fira Code',Consolas,monospace;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.6;padding:20px;max-width:900px;margin:0 auto}
-  header{text-align:center;padding:30px 20px;margin-bottom:30px;background:var(--card-bg);border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.1)}
-  header h1{font-size:1.4em;margin-bottom:8px}
-  header .meta{color:var(--muted);font-size:.9em}
-  .msg{margin-bottom:16px;border-radius:10px;padding:14px 18px;position:relative;box-shadow:0 1px 2px rgba(0,0,0,.06)}
-  .msg .label{font-weight:600;font-size:.8em;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-  .msg .ts{position:absolute;top:14px;right:18px;font-size:.75em;color:var(--muted)}
-  .msg .body{font-size:.95em;white-space:pre-wrap;word-break:break-word}
-  .msg-user{background:var(--user-bg);border-left:4px solid var(--user-border)}
-  .msg-user .label{color:var(--user-border)}
-  .msg-asst{background:var(--asst-bg);border-left:4px solid var(--asst-border)}
-  .msg-asst .label{color:var(--asst-border)}
-  .msg-think{background:var(--think-bg);border-left:4px solid var(--think-border);font-style:italic}
-  .msg-think .label{color:var(--think-border)}
-  .msg-tool{background:var(--tool-bg);border-left:4px solid var(--tool-border)}
-  .msg-tool .label{color:var(--tool-border)}
-  .msg-result{background:var(--result-bg);border-left:4px solid var(--result-border)}
-  .msg-result .label{color:var(--muted)}
-  pre{background:#263238;color:#eeffff;padding:12px;border-radius:6px;overflow-x:auto;font-size:.85em;margin:8px 0;white-space:pre-wrap;word-break:break-word}
-  code{font-family:var(--mono);font-size:.9em;background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px}
-  pre code{background:none;padding:0}
-  details{margin-top:4px}
-  summary{cursor:pointer;color:var(--muted);font-size:.85em;user-select:none}
-  summary:hover{color:var(--text)}
-  .trunc{color:var(--muted);font-style:italic;font-size:.85em}
-  a{color:var(--user-border)}
+  * { box-sizing: border-box; margin: 0; padding: 0 }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 0;
+  }
+
+  /* Header */
+  .header {
+    padding: 18px 24px;
+    background: rgba(255,255,255,.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: .5px solid rgba(0,0,0,.08);
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header-title { font-size: 1.3em; font-weight: 600; margin-bottom: 6px }
+  .header-sub { font-size: .85em; color: var(--muted); margin-top: 2px }
+  .header-sub small { font-size: .85em }
+
+  /* Chat area */
+  .chat {
+    max-width: 90vw;
+    margin: 0 auto;
+    padding: 24px 80px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Row */
+  .row { display: flex; align-items: flex-start; gap: 10px; max-width: 75% }
+  .row-l { margin-right: auto }
+  .row-r { margin-left: auto; flex-direction: row-reverse }
+
+  @media (max-width: 600px) {
+    .row { max-width: 88% }
+    .chat { padding: 12px 16px 30px; gap: 12px }
+  }
+  @media (min-width: 601px) and (max-width: 1200px) {
+    .chat { max-width: 92vw }
+    .row { max-width: 72% }
+  }
+  @media (min-width: 1201px) {
+    .chat { max-width: 1100px }
+    .row { max-width: 68% }
+  }
+
+  /* Avatar */
+  .av {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    color: #fff;
+  }
+  .av-codex {
+    background: transparent;
+    background-image: url('data:image/png;base64,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');
+    background-size: cover;
+    border-radius: 8px;
+  }
+  .av-claude { background: linear-gradient(145deg, #d4a574, #c4895a) }
+  .av-llm { background: linear-gradient(145deg, #a29bfe, #6c5ce7) }
+  .av-usr { background: linear-gradient(145deg, #74b9ff, #0984e3) }
+
+  /* Bubble */
+  .b {
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: .95em;
+    line-height: 1.65;
+    box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  }
+  .row-l .b { border-top-left-radius: 4px }
+  .row-r .b { border-top-right-radius: 4px }
+
+  .b-usr { background: var(--user-bg) }
+  .b-asst { background: var(--asst-bg) }
+  .b-think { background: var(--think-bg); opacity: .9 }
+  .b-tool { background: var(--tool-bg) }
+  .b-result { background: var(--result-bg) }
+
+  .sender {
+    font-size: .74em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 4px;
+    color: var(--muted);
+  }
+  .sender-llm { color: var(--accent) }
+  .sender-usr { color: var(--user-accent) }
+  .ts { font-weight: 400; margin-left: 6px; letter-spacing: 0; text-transform: none; opacity: .7 }
+
+  .body { word-break: break-word }
+  .body p { margin: .4em 0 }
+  .body p:first-child { margin-top: 0 }
+  .body p:last-child { margin-bottom: 0 }
+  .body ul, .body ol { margin: .4em 0; padding-left: 1.5em }
+  .body li { margin: .2em 0 }
+  .body h1,.body h2,.body h3,.body h4 { margin: .6em 0 .3em; font-size: 1em; font-weight: 600 }
+  .body table { border-collapse: collapse; margin: .5em 0; font-size: .9em }
+  .body th,.body td { border: 1px solid #ddd; padding: 4px 8px }
+  .body th { background: rgba(0,0,0,.04) }
+
+  /* Tool label */
+  .tool-tag {
+    display: inline-block;
+    font-size: .82em;
+    font-weight: 600;
+    color: var(--accent);
+    background: rgba(108,92,231,.08);
+    padding: 2px 10px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+  }
+
+  /* Code */
+  pre {
+    background: #1e1e2e;
+    color: #cdd6f4;
+    padding: 12px 14px;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-size: .8em;
+    margin: 8px 0 2px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  code {
+    font-family: var(--mono);
+    font-size: .88em;
+    background: rgba(0,0,0,.05);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  pre code { background: none; padding: 0 }
+
+  /* Collapsible */
+  details { margin-top: 4px }
+  summary {
+    cursor: pointer;
+    font-size: .78em;
+    color: var(--muted);
+    user-select: none;
+    transition: color .15s;
+  }
+  summary:hover { color: var(--text) }
+  .trunc { color: var(--muted); font-style: italic; font-size: .8em }
+  a { color: var(--user-accent); text-decoration: none }
+  a:hover { text-decoration: underline }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Session Transcript</h1>
-  <div class="meta">
+<div class="header">
+  <div class="header-title">Session Transcript</div>
+  <div class="header-sub">
     {{ assistant_label }} &middot; {{ session_date }}<br>
     <small>Source: {{ source_file }}</small>
   </div>
-</header>
+</div>
 
+{% if "codex" in originator|lower %}
+  {% set av_class = "av-codex" %}
+  {% set av_icon = "" %}
+{% elif "claude" in originator|lower %}
+  {% set av_class = "av-claude" %}
+  {% set av_icon = "C" %}
+{% else %}
+  {% set av_class = "av-llm" %}
+  {% set av_icon = "&#129302;" %}
+{% endif %}
+
+<div class="chat">
 {% for msg in messages %}
 {% if msg.role == "user" %}
-<div class="msg msg-user">
-  <div class="label">User {% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
-  <div class="body">{{ msg.content }}</div>
+<div class="row row-r">
+  <div class="av av-usr">&#128100;</div>
+  <div class="b b-usr">
+    <div class="sender sender-usr">User{% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
+    <div class="body">{{ msg.content | md }}</div>
+  </div>
 </div>
 
 {% elif msg.role == "assistant" %}
-<div class="msg msg-asst">
-  <div class="label">{{ originator }} {% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
-  <div class="body">{{ msg.content }}</div>
+<div class="row row-l">
+  <div class="av {{ av_class }}">{{ av_icon }}</div>
+  <div class="b b-asst">
+    <div class="sender sender-llm">{{ originator }}{% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
+    <div class="body">{{ msg.content | md }}</div>
+  </div>
 </div>
 
 {% elif msg.role == "thinking" %}
 {% set text, was_trunc = truncate(msg.content, 1500) %}
-<div class="msg msg-think">
-  <div class="label">Thinking {% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
-  <details><summary>Show reasoning</summary>
-    <div class="body">{{ text }}{% if was_trunc %} <span class="trunc">[truncated]</span>{% endif %}</div>
-  </details>
+<div class="row row-l">
+  <div class="av {{ av_class }}">{{ av_icon }}</div>
+  <div class="b b-think">
+    <div class="sender sender-llm">Thinking{% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
+    <details><summary>Show reasoning</summary>
+      <div class="body">{{ text }}{% if was_trunc %} <span class="trunc">[truncated]</span>{% endif %}</div>
+    </details>
+  </div>
 </div>
 
 {% elif msg.role == "tool_call" %}
 {% set args_text = msg | format_tool_args %}
 {% set display, was_trunc = truncate(args_text, 3000) %}
-<div class="msg msg-tool">
-  <div class="label">Tool: {{ msg.tool_name }} {% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
-  <details><summary>Show call details</summary>
-    <pre><code>{{ display }}{% if was_trunc %} [truncated]{% endif %}</code></pre>
-  </details>
+<div class="row row-l">
+  <div class="av {{ av_class }}">{{ av_icon }}</div>
+  <div class="b b-tool">
+    <span class="tool-tag">{{ msg.tool_name }}</span>
+    {% if msg.timestamp %}<span class="ts" style="font-size:.68em;color:var(--muted)">{{ msg.timestamp | format_ts }}</span>{% endif %}
+    <details><summary>Show call</summary>
+      <pre><code>{{ display }}{% if was_trunc %} [truncated]{% endif %}</code></pre>
+    </details>
+  </div>
 </div>
 
 {% elif msg.role == "tool_result" %}
 {% set display, was_trunc = truncate(msg.content, 3000) %}
-<div class="msg msg-result">
-  <div class="label">Tool Result {% if msg.timestamp %}<span class="ts">{{ msg.timestamp | format_ts }}</span>{% endif %}</div>
-  <details><summary>Show output</summary>
-    <pre><code>{{ display }}{% if was_trunc %} [truncated]{% endif %}</code></pre>
-  </details>
+<div class="row row-l">
+  <div class="av {{ av_class }}">{{ av_icon }}</div>
+  <div class="b b-result">
+    <span class="tool-tag">Result</span>
+    {% if msg.timestamp %}<span class="ts" style="font-size:.68em;color:var(--muted)">{{ msg.timestamp | format_ts }}</span>{% endif %}
+    <details><summary>Show output</summary>
+      <pre><code>{{ display }}{% if was_trunc %} [truncated]{% endif %}</code></pre>
+    </details>
+  </div>
 </div>
 {% endif %}
 {% endfor %}
+</div>
 
 </body>
 </html>

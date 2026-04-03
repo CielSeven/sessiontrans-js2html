@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 
+import markdown as md
 from jinja2 import Environment, FileSystemLoader
+from markupsafe import Markup
 
 from .parser import Conversation, Message
 
@@ -40,6 +43,17 @@ def _truncate(text: str, max_len: int = 3000) -> tuple[str, bool]:
     return text[:max_len], True
 
 
+def _flatten_links(text: str) -> str:
+    """Convert [text](url) to 'text (url)' — keeps the path visible as plain text."""
+    return re.sub(r'\[([^\]]+)\]\(([^)]+)\)', r'\1 (\2)', text)
+
+
+def _render_md(text: str) -> Markup:
+    text = _flatten_links(text)
+    html = md.markdown(text, extensions=["fenced_code", "tables", "nl2br"])
+    return Markup(html)
+
+
 def _format_tool_args(msg: Message) -> str:
     args = msg.tool_args
     if isinstance(args, dict):
@@ -57,6 +71,7 @@ def render_html(conv: Conversation, source_file: str = "") -> str:
     env.filters["format_ts"] = _format_ts
     env.filters["format_date"] = _format_date
     env.filters["format_tool_args"] = _format_tool_args
+    env.filters["md"] = _render_md
     env.globals["truncate"] = _truncate
     env.globals["isinstance"] = isinstance
     env.globals["json_dumps"] = lambda x, **kw: json.dumps(x, **kw)

@@ -6,6 +6,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .masker import apply_masks
+
 
 @dataclass
 class Message:
@@ -35,7 +37,6 @@ class Conversation:
 
     def apply_masks(self, rules: list) -> None:
         """Apply masking rules (list of MaskRule) to all text fields."""
-        from .masker import apply_masks
         for msg in self.messages:
             msg.content = apply_masks(msg.content, rules)
             msg.tool_name = apply_masks(msg.tool_name, rules)
@@ -46,7 +47,6 @@ class Conversation:
 
 
 def _mask_dict(d: dict, rules: list) -> dict:
-    from .masker import apply_masks
     out = {}
     for k, v in d.items():
         if isinstance(v, str):
