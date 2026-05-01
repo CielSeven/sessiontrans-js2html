@@ -161,16 +161,16 @@ def parse_jsonl(path: str | Path) -> Conversation:
 
         elif ptype == "custom_tool_call":
             name = payload.get("name", "unknown")
-            args = payload.get("arguments", "")
+            args = payload.get("input", payload.get("arguments", ""))
             conv.messages.append(Message(
                 role="tool_call", tool_name=name, tool_args=args,
-                call_id=payload.get("id", ""), timestamp=ts,
+                call_id=payload.get("call_id", payload.get("id", "")), timestamp=ts,
             ))
 
         elif ptype == "custom_tool_call_output":
             conv.messages.append(Message(
                 role="tool_result", content=payload.get("output", ""),
-                call_id=payload.get("id", ""), timestamp=ts,
+                call_id=payload.get("call_id", payload.get("id", "")), timestamp=ts,
             ))
 
     return conv
